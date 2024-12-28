@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ student_name }} - Student Portal</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="main-portal-container">
+        <a href="{{ url_for('logout') }}" class="logout-link"> Logout</a>
+        <div class="header">
+            <h1>Welcome, {{ student_name }}!</h1>
+        </div>
+        <div class="module-container">
+            
+            <div class="module">
+                <a href="{{ url_for('attendance') }}">
+                    <img src="{{ url_for('static', filename='attendance.jpg') }}" alt="Attendance">
+                </a>
+            </div>
+
+            
+            <div class="module">
+                <a href="{{ url_for('photos') }}">
+                    <img src="{{ url_for('static', filename='photos.jpg') }}" alt="Attendance">
+                </a>
+            </div>
+
+            
+            <div class="module">
+                <a href="{{ url_for('certificates') }}">
+                    <img src="{{ url_for('static', filename='certificates.jpg') }}" alt="Attendance">
+                </a>
+            </div>
+
+            
+            <div class="module">
+                <a href="{{ url_for('calendar') }}">
+                    <img src="{{ url_for('static', filename='calendar.jpg') }}" alt="Attendance">
+                </a>
+            </div>
+
+            <div class="window">
+                <div class="sustainable-tip">
+                    <h3>Sustainable Tip of the Day</h3>
+                    <p>{{ session.tip_of_the_day }}</p>  
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

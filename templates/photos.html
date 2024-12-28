@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Photos - Student Portal</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="main-portal-container">
+        <a href="{{ url_for('portal') }}" class="back-to-portal">Back to Portal</a>
+        <div class="header">
+            <h1>Your Photo Gallery</h1>
+        </div>
+
+        <div class="gallery">
+            {% for image in images %}
+            <img src="{{ url_for('static', filename=image) }}" alt="{{ image }}" onclick="openLightbox('{{ url_for('static', filename=image) }}')">
+            {% endfor %}
+        </div>
+
+        <div class="lightbox" onclick="closeLightbox()">
+            <div class="lightbox-container">
+                <img id="lightboxImage">
+                <button class="download-btn" onclick="downloadImage()">Download</button>
+            </div>
+        </div>
+
+
+        <script>
+            function openLightbox(imageSrc) {
+                document.getElementById('lightboxImage').src = imageSrc;
+                document.querySelector('.lightbox').style.display = 'flex';
+            }
+
+            function closeLightbox() {
+                document.querySelector('.lightbox').style.display = 'none';
+            }
+
+            function downloadImage() {
+                var imageURL = document.getElementById('lightboxImage').src;
+                var link = document.createElement('a');
+                link.href = imageURL;
+                link.download = 'downloaded_image.jpg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function toggleSortButtons() {
+                var sortButtons = document.getElementById('sortButtons');
+                var backButton = document.querySelector('button[onclick="goBack()"]');
+                sortButtons.style.display = sortButtons.style.display === 'none' ? 'flex' : 'none';
+                backButton.style.display = backButton.style.display === 'none' ? 'inline-block' : 'none';
+            }
+
+            function goBack() {
+                var sortButtons = document.getElementById('sortButtons');
+                var backButton = document.querySelector('button[onclick="goBack()"]');
+                sortButtons.style.display = 'none';
+                backButton.style.display = 'none';
+            }
+
+            function sortGallery(criteria) {
+                var gallery = document.querySelector('.gallery');
+                var images = Array.from(gallery.children);
+
+                images.sort(function (a, b) {
+                    var aValue, bValue;
+
+                    if (criteria === 'dateAsc' || criteria === 'dateDesc') {
+                        aValue = new Date(a.dataset.date);
+                        bValue = new Date(b.dataset.date);
+                    } else if (criteria === 'sizeAsc' || criteria === 'sizeDesc') {
+                        aValue = parseInt(a.dataset.size);
+                        bValue = parseInt(b.dataset.size);
+                    }
+
+                    if (criteria.includes('Asc')) {
+                        return aValue - bValue;
+                    } else {
+                        return bValue - aValue;
+                    }
+                });
+
+                images.forEach(image => gallery.appendChild(image));
+            }
+        </script>
+    </div>
+</body>
+</html>

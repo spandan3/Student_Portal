@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Portal - Login</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="login-bg">
+        <div class="login-container">
+            <h2>Login as Student</h2>
+            <form id="login-form" method="post" action="/login">  
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" autocomplete="off" autofocus required><br><br>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" autocomplete="off" required><br><br>
+                <button type="submit" id="login-button">Login</button> 
+            </form>
+        </div>
+    </div>
+</body>
+</html>

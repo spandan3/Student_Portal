@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calender - Student Portal</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="main-portal-container">
+        <a href="{{ url_for('portal') }}" class="back-to-portal">Back to Portal</a>
+        <div class="header">
+            <h1>Your Calender</h1>
+        </div>
+        <div class="wrapper">
+            <header class="head">
+                <h1 class="main-heading"> EVENT PLANNER</h1>
+                <p class="current-date"></p>
+                <div class="icons">
+                    <span id="prev" class="material-symbols-rounded">chevron_left</span>
+                    <span id="next" class="material-symbols-rounded">chevron_right</span>
+                </div>
+            </header>
+            <div class="calendar">
+                <ul class="weeks">
+                    <li>Sun</li>
+                    <li>Mon</li>
+                    <li>Tue</li>
+                    <li>Wed</li>
+                    <li>Thu</li>
+                    <li>Fri</li>
+                    <li>Sat</li>
+                </ul>
+                <ul class="days" id="days"></ul>
+            </div>
+        </div>
+        <div class="events-container">
+            <h2>Upcoming Events</h2>
+            <div class="events" id="events"></div>
+        </div>
+
+        <div class="event-input-container">
+            <input type="date" id="event-date">
+            <input type="text" id="event-description" placeholder="Event description">
+            <button id="add-event">Add Event</button>
+        </div>
+    </div>
+    <script>
+        const daysTag = document.querySelector(".days");
+        const currentDate = document.querySelector(".current-date");
+        const prevNextIcon = document.querySelectorAll(".icons span");
+        const eventDateInput = document.getElementById("event-date");
+        const eventDescriptionInput = document.getElementById("event-description");
+        const addEventButton = document.getElementById("add-event");
+        const eventsSection = document.getElementById("events");
+
+        let date = new Date();
+        let currYear = date.getFullYear();
+        let currMonth = date.getMonth();
+        const months = [
+            "January", "February", "March", "April", "May", "June", "July",
+            "August", "September", "October", "November", "December"
+        ];
+
+        let events = [];  
+
+        function renderCalendar() {
+            let firstDayofMonth = new Date(currYear, currMonth, 1).getDay();
+            let lastDateofMonth = new Date(currYear, currMonth + 1, 0).getDate();
+            let lastDayofMonth = new Date(currYear, currMonth, lastDateofMonth).getDay();
+            let lastDateofLastMonth = new Date(currYear, currMonth, 0).getDate();
+            let liTag = "";
+
+            for (let i = firstDayofMonth; i > 0; i--) {
+                liTag += `<li class="inactive">${lastDateofLastMonth - i + 1}</li>`;
+            }
+
+            for (let i = 1; i <= lastDateofMonth; i++) {
+                let isToday = i === date.getDate() && currMonth === new Date().getMonth() && currYear === new Date().getFullYear() ? "active" : "";
+                liTag += `<li class="${isToday}" data-year="${currYear}" data-month="${currMonth + 1}">${i}</li>`;
+            }
+
+            for (let i = lastDayofMonth; i < 6; i++) {
+                liTag += `<li class="inactive">${i - lastDayofMonth + 1}</li>`;
+            }
+
+            currentDate.innerText = `${months[currMonth]} ${currYear}`;
+            daysTag.innerHTML = liTag;
+
+            const dateElements = Array.from(document.querySelectorAll('.days li:not(.inactive)'));
+
+            dateElements.forEach(dateElement => {
+                const day = dateElement.innerText;
+                const year = dateElement.dataset.year;
+                const month = dateElement.dataset.month;
+
+                const matchingEvents = events.filter(event => {
+                    const eventDate = new Date(event.date);
+                    return eventDate.getFullYear() == year && eventDate.getMonth() + 1 == month && eventDate.getDate() == day;
+                });
+
+                if (matchingEvents.length > 0) {
+                    const circleElement = document.createElement('div');
+                    circleElement.className = 'event-circle';
+                    dateElement.appendChild(circleElement);
+
+                    dateElement.addEventListener('mouseover', () => {
+                        circleElement.innerText = matchingEvents.map(event => event.description).join(', ');
+                    });
+
+                    dateElement.addEventListener('mouseout', () => {
+                        circleElement.innerText = '';
+                    });
+                }
+            });
+
+            dateElements.forEach(dateElement => {
+                dateElement.addEventListener('click', () => {
+                    const selectedDate = `${currYear}-${currMonth + 1}-${dateElement.innerText}`;
+                    const eventDescription = eventDescriptionInput.value;
+
+                    if (selectedDate && eventDescription) {
+                        events.push({ date: selectedDate, description: eventDescription });
+                        eventDescriptionInput.value = '';
+                        renderEvents();
+                    }
+                });
+            });
+        }
+
+        function renderEvents() {
+            eventsSection.innerHTML = '';
+
+            events.forEach(event => {
+                const eventElement = document.createElement('div');
+                eventElement.className = 'event';
+                eventElement.innerHTML = `
+            <span class="event-date">${event.date}</span>
+            <span class="event-description">${event.description}</span>
+            <button class="delete-event">Delete</button>
+        `;
+
+                eventElement.querySelector('.delete-event').addEventListener('click', () => {
+                    deleteEvent(event.date, event.description);
+                });
+
+                eventsSection.appendChild(eventElement);
+            });
+        }
+
+        function fetchAndRenderEvents() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/get_events', true);
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    events = response.events;
+                    renderCalendar();
+                    renderEvents();
+                } else {
+                    console.error('Error fetching events');
+                }
+            };
+
+            xhr.send();
+        }
+
+        fetchAndRenderEvents();
+
+        function addEvent() {
+            const eventDate = eventDateInput.value;
+            const eventDescription = eventDescriptionInput.value;
+
+            if (eventDate && eventDescription) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/add_event', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                const data = `event_date=${eventDate}&event_description=${eventDescription}`;
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        fetchAndRenderEvents();
+                        eventDateInput.value = ''; 
+                        eventDescriptionInput.value = '';
+                    } else {
+                        console.error('Error adding event');
+                    }
+                };
+
+                xhr.send(data);
+            }
+        }
+
+        function deleteEvent(dateToDelete, descriptionToDelete) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/delete_event', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            const data = JSON.stringify({
+                date: dateToDelete,
+                description: descriptionToDelete
+            });
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    fetchAndRenderEvents();
+                } else {
+                    console.error('Error deleting event');
+                }
+            };
+
+            xhr.send(data);
+        }
+
+
+        prevNextIcon.forEach(icon => {
+            icon.addEventListener("click", () => {
+                currMonth = icon.id === "prev" ? currMonth - 1 : currMonth + 1;
+
+                if (currMonth < 0 || currMonth > 11) {
+                    date = new Date(currYear, currMonth, new Date().getDate());
+                    currYear = date.getFullYear();
+                    currMonth = date.getMonth();
+                } else {
+                    date = new Date();
+                }
+                renderCalendar();
+            });
+            if (icon.id === "prev") {
+                icon.innerHTML = "&lsaquo;"; 
+            } else if (icon.id === "next") {
+                icon.innerHTML = "&rsaquo;"; 
+            }
+        });
+
+        addEventButton.addEventListener("click", addEvent);
+
+
+        eventsSection.addEventListener("wheel", (event) => {
+            if (event.deltaY > 0) {
+                eventsSection.scrollTop += 20;
+            } else {
+                eventsSection.scrollTop -= 20;
+            }
+        });
+        
+    </script>
+</body>
+</html>
